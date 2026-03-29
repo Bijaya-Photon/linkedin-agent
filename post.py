@@ -59,10 +59,11 @@ def post_to_linkedin():
     else:
         print(f"Error: {res.status_code} {res.text}")
 
+post_to_linkedin()
+
 random_hour = random.randint(8, 20)
 random_minute = random.randint(0, 59)
 post_time = f"{random_hour:02d}:{random_minute:02d}"
-print(f"Today's post will go out at {post_time}")
 schedule.every().day.at(post_time).do(post_to_linkedin)
 
 print("Scheduler running!")
