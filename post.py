@@ -61,12 +61,14 @@ def post_to_linkedin():
 
 post_to_linkedin()
 
-random_hour = random.randint(8, 20)
-random_minute = random.randint(0, 59)
-post_time = f"{random_hour:02d}:{random_minute:02d}"
-schedule.every().day.at(post_time).do(post_to_linkedin)
+random_hour1 = random.randint(0, 2)
+random_minute1 = random.randint(0, 59)
+post_time1 = f"{random_hour1:02d}:{random_minute1:02d}"
 
-print("Scheduler running!")
-while True:
-    schedule.run_pending()
-    time.sleep(60)
+random_hour2 = random.randint(9, 19)
+random_minute2 = random.randint(0, 59)
+post_time2 = f"{random_hour2:02d}:{random_minute2:02d}"
+
+print(f"Today's posts will go out at {post_time1} and {post_time2}")
+schedule.every().day.at(post_time1).do(post_to_linkedin)
+schedule.every().day.at(post_time2).do(post_to_linkedin)
