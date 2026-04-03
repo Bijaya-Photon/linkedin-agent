@@ -15,132 +15,88 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
-PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
-GMAIL_USER = os.getenv("GMAIL_USER")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
-
 PROJECT_CONTEXT = """
-Bijaya is working on a personal project called Smart Environmental Monitor for Mechanical Systems.
-The project monitors a running motor using temperature sensors, humidity sensors, and accelerometers.
-He is designing the sensor enclosure in SolidWorks, wiring sensors with Arduino, collecting data with LabVIEW DAQ, and analyzing results in MATLAB.
+Bijaya Acharya is a Mechanical Engineering junior at UTA, GPA 3.25, graduating 2027. International student from Nepal looking for engineering internships.
 
-Project timeline being followed:
-Week 1: Came up with the idea, researching sensors and doing initial sketches
-Week 2: Designing the enclosure in SolidWorks, figuring out sensor placement
-Week 3: Got the Arduino wired up with DHT11 temp sensor and MPU6050 accelerometer
-Week 4: Connected everything to LabVIEW DAQ, first data collection attempt
-Week 5: Running FFT analysis in MATLAB, finding interesting vibration patterns
-Week 6: Comparing baseline vs abnormal motor behavior in the data
-Week 7 onwards: Refining, fixing problems, sharing findings
+He is building a PID Temperature Controlled Fan System as a personal project.
+The system automatically adjusts a DC fan speed based on temperature readings using a PID control algorithm.
 
-Current week: randomly pick a week between 1 and 7 and post accordingly.
+Skills being used:
+SolidWorks for fan mount and enclosure design, Arduino with thermocouple sensor for temperature reading and PWM fan control, PID algorithm coded in Arduino, LabVIEW for real time temperature and fan speed monitoring dashboard, MATLAB for PID tuning analysis and step response plots.
+
+Project stages in order:
+Stage 1: Got the idea, researching PID control and planning the build
+Stage 2: Sketching and designing the fan mount and enclosure in SolidWorks
+Stage 3: Finalized SolidWorks design, figuring out part list and wiring plan
+Stage 4: Parts arrived, starting to wire Arduino and thermocouple
+Stage 5: First temperature readings working on serial monitor
+Stage 6: Fan PWM control working, fan responds to manual input
+Stage 7: Writing the PID algorithm in Arduino, tuning Kp Ki Kd values
+Stage 8: Building the LabVIEW dashboard for real time display
+Stage 9: First full closed loop test, system responding to heat changes
+Stage 10: Running step response tests, collecting data for MATLAB
+Stage 11: Analyzing PID tuning results in MATLAB, comparing response curves
+Stage 12: Final enclosure assembly and full system build
+Stage 13: Final demo working, documenting results
+Stage 14: Project complete, wrap up and lessons learned
 """
 
-def send_email_notification(post_text, had_image):
-    try:
-        msg = MIMEMultipart()
-        msg["From"] = GMAIL_USER
-        msg["To"] = "bxa4754@mavs.uta.edu"
-        msg["Subject"] = "LinkedIn Post Published!"
-        image_note = "with an image" if had_image else "without an image"
-        body = f"Your LinkedIn post was just published {image_note}!\n\n---\n\n{post_text}\n\n---\n\nKeep building!"
-        msg.attach(MIMEText(body, "plain"))
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-        server.sendmail(GMAIL_USER, "bxa4754@mavs.uta.edu", msg.as_string())
-        server.quit()
-        print("Email notification sent!")
-    except Exception as e:
-        print(f"Email failed: {e}")
+POST_LOG = []
+STAGE_INDEX = [0]
 
-def get_image_for_post(post_text):
-    try:
-        keywords = ["mechanical engineering", "Arduino sensors", "SolidWorks CAD", "LabVIEW data", "MATLAB analysis", "engineering lab", "circuit board", "motor engineering"]
-        query = random.choice(keywords)
-        res = requests.get(
-            "https://api.pexels.com/v1/search",
-            headers={"Authorization": PEXELS_API_KEY},
-            params={"query": query, "per_page": 10, "orientation": "landscape"}
-        )
-        photos = res.json().get("photos", [])
-        if photos:
-            photo = random.choice(photos)
-            image_url = photo["src"]["large"]
-            image_data = requests.get(image_url).content
-            return image_data
-        return None
-    except Exception as e:
-        print(f"Image fetch failed: {e}")
-        return None
-
-def upload_image_to_linkedin(image_data, user_id):
-    try:
-        register_res = requests.post(
-            "https://api.linkedin.com/v2/assets?action=registerUpload",
-            headers={
-                "Authorization": f"Bearer {LINKEDIN_ACCESS_TOKEN}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "registerUploadRequest": {
-                    "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
-                    "owner": f"urn:li:person:{user_id}",
-                    "serviceRelationships": [{
-                        "relationshipType": "OWNER",
-                        "identifier": "urn:li:userGeneratedContent"
-                    }]
-                }
-            }
-        )
-        upload_data = register_res.json()
-        asset = upload_data["value"]["asset"]
-        upload_url = upload_data["value"]["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
-
-        requests.put(
-            upload_url,
-            headers={
-                "Authorization": f"Bearer {LINKEDIN_ACCESS_TOKEN}",
-                "Content-Type": "image/jpeg"
-            },
-            data=image_data
-        )
-        return asset
-    except Exception as e:
-        print(f"Image upload failed: {e}")
-        return None
+def get_next_stage():
+    stages = list(range(1, 15))
+    idx = STAGE_INDEX[0]
+    if idx >= len(stages):
+        return stages[-1]
+    stage = stages[idx]
+    STAGE_INDEX[0] += 1
+    return stage
 
 def generate_post():
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+    stage = get_next_stage()
+
+    bonus_types = [
+        "just post the project update for this stage naturally",
+        "post the project update but connect it briefly to a real engineering concept or fact",
+        "post the project update and mention something that did not go as planned",
+        "post the project update and connect it to a recent real engineering news or achievement found via web search",
+    ]
+
+    bonus = random.choice(bonus_types)
+
     message = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=1024,
+        tools=[{"type": "web_search_20250305", "name": "web_search"}],
         messages=[
-            {"role": "user", "content": f"""You are a LinkedIn content creator for Bijaya Acharya, a Mechanical Engineering junior at UTA GPA 3.25 graduating 2027. International student from Nepal, looking for engineering internships.
+            {"role": "user", "content": f"""You are writing a LinkedIn post for Bijaya Acharya, a Mechanical Engineering junior at UTA.
 
 {PROJECT_CONTEXT}
 
-Post types to rotate between:
-1. Project update on the Smart Environmental Monitor, specific to the current week in the timeline
-2. Something new discovered in LabVIEW or MATLAB during the project
-3. A real recent breakthrough in Mechanical Engineering from a real source like MIT, NASA, GE, or a journal, related to what he is working on
-4. A short motivational or honest reflection about being an engineering student or international student
-5. Something specific about SolidWorks design challenge he hit while designing the enclosure
+Current project stage: {stage} out of 14
+What to do: {bonus}
 
 Rules:
-Write like a real curious engineering student not corporate or AI.
-Never use bullet points, dashes, asterisks, or any special characters.
-No em dashes or hyphens connecting sentences.
-Plain flowing sentences like a real person talking.
-Fresh and specific every time, not generic.
-Short and punchy, max 4 sentences plus hashtags.
-End with a question or reaction to boost engagement.
-Mention internship search naturally only once every 5 posts.
-Max 3 hashtags no formatting around them.
-Make it sound like real ongoing work not made up.
-Write only the post nothing else."""}
+Write like a real engineering student, grounded and honest, not corporate or hyped.
+NEVER start with Just, Just finished, Just completed, Excited to share, Thrilled, or any opener like that.
+Start mid thought as if you are already in the middle of it.
+No bullet points, no dashes, no asterisks, no em dashes, no special characters of any kind.
+Plain flowing sentences only like a real person writing.
+Max 4 sentences total then 3 hashtags on the last line.
+Keep it short and specific to the stage, not vague or generic.
+If this is stage 13 or 14 make it sound like the project is wrapping up naturally.
+Mention internship search only once across all posts, not every time.
+End with a question or honest thought that invites a reply.
+Write only the post, nothing else."""}
         ]
     )
+
+    for block in message.content:
+        if hasattr(block, "text"):
+            return block.text
     return message.content[0].text
 
 def get_linkedin_user_id():
@@ -153,53 +109,23 @@ def get_linkedin_user_id():
 def post_to_linkedin():
     print("Generating post...")
     post_text = generate_post()
-    print(f"Post generated:\n{post_text}\n")
+    print(f"Post:\n{post_text}\n")
 
     user_id = get_linkedin_user_id()
-    current_hour = datetime.now().hour
-    is_daytime = 9 <= current_hour <= 19
 
-    asset = None
-    if is_daytime:
-        print("Daytime post, fetching image...")
-        image_data = get_image_for_post(post_text)
-        if image_data:
-            asset = upload_image_to_linkedin(image_data, user_id)
-
-    if asset:
-        post_body = {
-            "author": f"urn:li:person:{user_id}",
-            "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {"text": post_text},
-                    "shareMediaCategory": "IMAGE",
-                    "media": [{
-                        "status": "READY",
-                        "description": {"text": "Engineering project update"},
-                        "media": asset,
-                        "title": {"text": "Smart Environmental Monitor"}
-                    }]
-                }
-            },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+    post_body = {
+        "author": f"urn:li:person:{user_id}",
+        "lifecycleState": "PUBLISHED",
+        "specificContent": {
+            "com.linkedin.ugc.ShareContent": {
+                "shareCommentary": {"text": post_text},
+                "shareMediaCategory": "NONE"
             }
+        },
+        "visibility": {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
         }
-    else:
-        post_body = {
-            "author": f"urn:li:person:{user_id}",
-            "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {"text": post_text},
-                    "shareMediaCategory": "NONE"
-                }
-            },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-            }
-        }
+    }
 
     res = requests.post(
         "https://api.linkedin.com/v2/ugcPosts",
@@ -211,24 +137,16 @@ def post_to_linkedin():
     )
 
     if res.status_code == 201:
-        print("Posted to LinkedIn successfully!")
-        send_email_notification(post_text, asset is not None)
+        print("Posted successfully!")
     else:
-        print(f"Error: {res.status_code} {res.text}")
+        print(f"Failed: {res.status_code} {res.text}")
 
-post_to_linkedin()
+random_hour = random.randint(8, 20)
+random_minute = random.randint(0, 59)
+post_time = f"{random_hour:02d}:{random_minute:02d}"
 
-random_hour1 = random.randint(0, 2)
-random_minute1 = random.randint(0, 59)
-post_time1 = f"{random_hour1:02d}:{random_minute1:02d}"
-
-random_hour2 = random.randint(9, 19)
-random_minute2 = random.randint(0, 59)
-post_time2 = f"{random_hour2:02d}:{random_minute2:02d}"
-
-print(f"Today's posts will go out at {post_time1} and {post_time2}")
-schedule.every().day.at(post_time1).do(post_to_linkedin)
-schedule.every().day.at(post_time2).do(post_to_linkedin)
+print(f"Next post at {post_time} every 2 days")
+schedule.every(2).days.at(post_time).do(post_to_linkedin)
 
 print("Scheduler running!")
 while True:
