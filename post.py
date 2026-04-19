@@ -16,6 +16,10 @@ load_dotenv()
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
 PROJECT_CONTEXT = """
+STAGE_FILE = os.path.join(os.path.dirname(__file__), "stage.txt")
+LAST_POST_FILE = os.path.join(os.path.dirname(__file__), "last_post.txt")
+
+PROJECT_CONTEXT = """
 Bijaya Acharya is a Mechanical Engineering junior at UTA, GPA 3.25, graduating 2027. International student from Nepal looking for engineering internships.
 
 He is building a PID Temperature Controlled Fan System as a personal project.
@@ -41,17 +45,26 @@ Stage 13: Final demo working, documenting results
 Stage 14: Project complete, wrap up and lessons learned
 """
 
-POST_LOG = []
-STAGE_INDEX = [0]
-
 def get_next_stage():
-    stages = list(range(1, 15))
-    idx = STAGE_INDEX[0]
-    if idx >= len(stages):
-        return stages[-1]
-    stage = stages[idx]
-    STAGE_INDEX[0] += 1
+    if os.path.exists(STAGE_FILE):
+        with open(STAGE_FILE, "r") as f:
+            stage = int(f.read().strip())
+    else:
+        stage = 1
+    next_stage = stage + 1 if stage < 14 else 14
+    with open(STAGE_FILE, "w") as f:
+        f.write(str(next_stage))
     return stage
+
+def get_last_post():
+    if os.path.exists(LAST_POST_FILE):
+        with open(LAST_POST_FILE, "r") as f:
+            return f.read().strip()
+    return ""
+
+def save_last_post(text):
+    with open(LAST_POST_FILE, "w") as f:
+        f.write(text)
 
 def generate_post():
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -82,11 +95,12 @@ What to do: {bonus}
 Rules:
 Write like a real engineering student, grounded and honest, not corporate or hyped.
 NEVER start with Just, Just finished, Just completed, Excited to share, Thrilled, or any opener like that.
-Start mid thought as if you are already in the middle of it.
+Start mid thought as if you are already doing it.
 No bullet points, no dashes, no asterisks, no em dashes, no special characters of any kind.
 Plain flowing sentences only like a real person writing.
-Max 4 sentences total then 3 hashtags on the last line.
-Keep it short and specific to the stage, not vague or generic.
+Max 3 sentences total then 3 hashtags on the last line.
+Keep it short and specific to this stage only, not vague or generic.
+Do not try to sound impressive or prove too much. One simple honest thought.
 If this is stage 13 or 14 make it sound like the project is wrapping up naturally.
 Mention internship search only once across all posts, not every time.
 End with a question or honest thought that invites a reply.
@@ -108,7 +122,11 @@ def get_linkedin_user_id():
 
 def post_to_linkedin():
     print("Generating post...")
+    last = get_last_post()
     post_text = generate_post()
+    if post_text.strip() == last.strip():
+        post_text = generate_post()
+    save_last_post(post_text)
     print(f"Post:\n{post_text}\n")
 
     user_id = get_linkedin_user_id()
