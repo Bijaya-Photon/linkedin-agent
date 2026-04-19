@@ -1,21 +1,16 @@
 import anthropic
 import requests
-import os
 import schedule
 import time
 import random
-import smtplib
-import tempfile
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
-from datetime import datetime
+import os
 
-load_dotenv()
+ANTHROPIC_API_KEY = "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"
+LINKEDIN_ACCESS_TOKEN = "AQWzWcmrlmJ2rhDBz7FrzeeI0Oq2ElfPkpwdicq9gIcaX51W-Hd65AFjO9rm-a9J_NKtASxIZCVxYXfDVOfsdhuYWrFhn_-yg_JYOy2NWiH2gDgAX15U0plQvS1QhPh74GQXn06TKMZIVsdWeC5IQew6ReGzrTRru476OiDcK98u4pw5NMrKu-PY_RWqCRoLyY059G1eozQud3YRfNVVmYTOeU0aWbqOVPkOtUL7uEonOndDUDUqE-ltJTeIIqglOoFmjWpjWzZC4IO3xLT-NrdofpgP_CtiuLNHIu5CHOzh_6a0RDRwqypwg56vqDd-IOXz7-Ao5K48u9hTv4TeOfs-dOnn-w
+LINKEDIN_ACCESS_TOKEN=AQWUXa46QTqcAQdoOTOKkzOUpO1Rjx9ZrLh2MYW7yh6ra-DV3XdNVBv3z5E-WyuG1UaDoAp8z9vTPThJCS7K9mv9tJI8ZW42dY_KnY8G9pangG0_6WdYnkl3S3t7oq1q3W8sJVJr-fVTtgsDA04HO3zOsuCoZaTNeUBdAZi9mmTiHdrlS7VLgCLeDIzPZDUA8QWJ1Il1nPeYPU5g48JMLUaJcgDfjHskKunsawTgIqbakFHdjoPYQHVcx047f223llhdLG_r8hPi57PHa27m0TMDIjRg_s7gqq2uYIZkRNLZup97P5g4a1pLNmJX6mlCP1dNkJ9FgVDj615SJ7rdrd1wN4xG0w
+LINKEDIN_ACCESS_TOKEN=AQVAJQqLebEW_QREGYN-_QakzMU1FeoM3atoOvLdtQ3qrBxaDJT2d2gfPUiqt3ayrE0nZOl-P1sa4rTNzZvM-I79dN-zV9eSVBTEhP2V67ix06v6y8SfwVwRmZ7n-vn_wnVfE6pfUXNetz9cJBoessxpbyvFkkxPIk8GI3PQQdDbndmQx_MpWPls0wa-p8XfJyanv0Jxffx68_A_cX0_aMtxKxhiIJKhHT3tczwB893pj-jxVJ7auuQBFL2-9jtv594AkaZLdRiWnVBAftoy78-cmQcfFkbvDvaFF47v6G_4ovwIfcEu70HfUvom6tNbk6063JZxudH58EEccYboKDBDCf2lrg
+LINKEDIN_ACCESS_TOKEN=AQXS6H49xyd4rRNajhg8yrXS3wYixNuF83XS1vbMHmbALjwXLecYrFF4uQCfBK5l5tTj4pgjsnXrmdIqYyhOP28236yiLPIx1VNPN2SiQJkKJieyybX7HQLylq-jV7VcyVYrJX0NxFO0I55qNorqh3l6KQb95VvTGVzLM9tdEsuv6qWGxUFfioAD24ARlqc-APltn7TsWXoX2jDoqugGvtrLAw2316vNkROOAewSmyvmU7kpioeUS5HQnLlmqqp6I3dAvoZIwX7DMQ2W630eCsJIXQ0QBKNON4EhkLG6tS8CtiX0Wk3aQnPP3-4FYarkBLslKV0vNO_wo-pVXGXeqM-JKw-VeA%"
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
-PROJECT_CONTEXT = """
 STAGE_FILE = os.path.join(os.path.dirname(__file__), "stage.txt")
 LAST_POST_FILE = os.path.join(os.path.dirname(__file__), "last_post.txt")
 
@@ -67,18 +62,14 @@ def save_last_post(text):
 
 def generate_post():
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
     stage = get_next_stage()
-
     bonus_types = [
         "just post the project update for this stage naturally",
         "post the project update but connect it briefly to a real engineering concept or fact",
         "post the project update and mention something that did not go as planned",
         "post the project update and connect it to a recent real engineering news or achievement found via web search",
     ]
-
     bonus = random.choice(bonus_types)
-
     prompt = (
         "You are writing a LinkedIn post for Bijaya Acharya, a Mechanical Engineering junior at UTA.\n\n"
         + PROJECT_CONTEXT
@@ -98,16 +89,12 @@ def generate_post():
         "End with a question or honest thought that invites a reply.\n"
         "Write only the post, nothing else."
     )
-
     message = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=1024,
         tools=[{"type": "web_search_20250305", "name": "web_search"}],
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        messages=[{"role": "user", "content": prompt}]
     )
-
     for block in message.content:
         if hasattr(block, "text"):
             return block.text
@@ -128,9 +115,7 @@ def post_to_linkedin():
         post_text = generate_post()
     save_last_post(post_text)
     print(f"Post:\n{post_text}\n")
-
     user_id = get_linkedin_user_id()
-
     post_body = {
         "author": f"urn:li:person:{user_id}",
         "lifecycleState": "PUBLISHED",
@@ -144,7 +129,6 @@ def post_to_linkedin():
             "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
         }
     }
-
     res = requests.post(
         "https://api.linkedin.com/v2/ugcPosts",
         headers={
@@ -153,7 +137,6 @@ def post_to_linkedin():
         },
         json=post_body
     )
-
     if res.status_code == 201:
         print("Posted successfully!")
     else:
@@ -162,10 +145,8 @@ def post_to_linkedin():
 random_hour = random.randint(8, 20)
 random_minute = random.randint(0, 59)
 post_time = f"{random_hour:02d}:{random_minute:02d}"
-
 print(f"Next post at {post_time} every 2 days")
 schedule.every(2).days.at(post_time).do(post_to_linkedin)
-
 print("Scheduler running!")
 while True:
     schedule.run_pending()
