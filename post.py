@@ -19,31 +19,30 @@ PROJECT_CONTEXT = """
 STAGE_FILE = os.path.join(os.path.dirname(__file__), "stage.txt")
 LAST_POST_FILE = os.path.join(os.path.dirname(__file__), "last_post.txt")
 
-PROJECT_CONTEXT = """
-Bijaya Acharya is a Mechanical Engineering junior at UTA, GPA 3.25, graduating 2027. International student from Nepal looking for engineering internships.
-
-He is building a PID Temperature Controlled Fan System as a personal project.
-The system automatically adjusts a DC fan speed based on temperature readings using a PID control algorithm.
-
-Skills being used:
-SolidWorks for fan mount and enclosure design, Arduino with thermocouple sensor for temperature reading and PWM fan control, PID algorithm coded in Arduino, LabVIEW for real time temperature and fan speed monitoring dashboard, MATLAB for PID tuning analysis and step response plots.
-
-Project stages in order:
-Stage 1: Got the idea, researching PID control and planning the build
-Stage 2: Sketching and designing the fan mount and enclosure in SolidWorks
-Stage 3: Finalized SolidWorks design, figuring out part list and wiring plan
-Stage 4: Parts arrived, starting to wire Arduino and thermocouple
-Stage 5: First temperature readings working on serial monitor
-Stage 6: Fan PWM control working, fan responds to manual input
-Stage 7: Writing the PID algorithm in Arduino, tuning Kp Ki Kd values
-Stage 8: Building the LabVIEW dashboard for real time display
-Stage 9: First full closed loop test, system responding to heat changes
-Stage 10: Running step response tests, collecting data for MATLAB
-Stage 11: Analyzing PID tuning results in MATLAB, comparing response curves
-Stage 12: Final enclosure assembly and full system build
-Stage 13: Final demo working, documenting results
-Stage 14: Project complete, wrap up and lessons learned
-"""
+PROJECT_CONTEXT = (
+    "Bijaya Acharya is a Mechanical Engineering junior at UTA, GPA 3.25, graduating 2027. "
+    "International student from Nepal looking for engineering internships.\n\n"
+    "He is building a PID Temperature Controlled Fan System as a personal project. "
+    "The system automatically adjusts a DC fan speed based on temperature readings using a PID control algorithm.\n\n"
+    "Skills being used: SolidWorks for fan mount and enclosure design, Arduino with thermocouple sensor "
+    "for temperature reading and PWM fan control, PID algorithm coded in Arduino, LabVIEW for real time "
+    "temperature and fan speed monitoring dashboard, MATLAB for PID tuning analysis and step response plots.\n\n"
+    "Project stages in order:\n"
+    "Stage 1: Got the idea, researching PID control and planning the build\n"
+    "Stage 2: Sketching and designing the fan mount and enclosure in SolidWorks\n"
+    "Stage 3: Finalized SolidWorks design, figuring out part list and wiring plan\n"
+    "Stage 4: Parts arrived, starting to wire Arduino and thermocouple\n"
+    "Stage 5: First temperature readings working on serial monitor\n"
+    "Stage 6: Fan PWM control working, fan responds to manual input\n"
+    "Stage 7: Writing the PID algorithm in Arduino, tuning Kp Ki Kd values\n"
+    "Stage 8: Building the LabVIEW dashboard for real time display\n"
+    "Stage 9: First full closed loop test, system responding to heat changes\n"
+    "Stage 10: Running step response tests, collecting data for MATLAB\n"
+    "Stage 11: Analyzing PID tuning results in MATLAB, comparing response curves\n"
+    "Stage 12: Final enclosure assembly and full system build\n"
+    "Stage 13: Final demo working, documenting results\n"
+    "Stage 14: Project complete, wrap up and lessons learned\n"
+)
 
 def get_next_stage():
     if os.path.exists(STAGE_FILE):
@@ -80,31 +79,32 @@ def generate_post():
 
     bonus = random.choice(bonus_types)
 
+    prompt = (
+        "You are writing a LinkedIn post for Bijaya Acharya, a Mechanical Engineering junior at UTA.\n\n"
+        + PROJECT_CONTEXT
+        + "\nCurrent project stage: " + str(stage) + " out of 14"
+        + "\nWhat to do: " + bonus
+        + "\n\nRules:\n"
+        "Write like a real engineering student, grounded and honest, not corporate or hyped.\n"
+        "NEVER start with Just, Just finished, Just completed, Excited to share, Thrilled, or any opener like that.\n"
+        "Start mid thought as if you are already doing it.\n"
+        "No bullet points, no dashes, no asterisks, no em dashes, no special characters of any kind.\n"
+        "Plain flowing sentences only like a real person writing.\n"
+        "Max 3 sentences total then 3 hashtags on the last line.\n"
+        "Keep it short and specific to this stage only, not vague or generic.\n"
+        "Do not try to sound impressive or prove too much. One simple honest thought.\n"
+        "If this is stage 13 or 14 make it sound like the project is wrapping up naturally.\n"
+        "Mention internship search only once across all posts, not every time.\n"
+        "End with a question or honest thought that invites a reply.\n"
+        "Write only the post, nothing else."
+    )
+
     message = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=1024,
         tools=[{"type": "web_search_20250305", "name": "web_search"}],
         messages=[
-            {"role": "user", "content": f"""You are writing a LinkedIn post for Bijaya Acharya, a Mechanical Engineering junior at UTA.
-
-{PROJECT_CONTEXT}
-
-Current project stage: {stage} out of 14
-What to do: {bonus}
-
-Rules:
-Write like a real engineering student, grounded and honest, not corporate or hyped.
-NEVER start with Just, Just finished, Just completed, Excited to share, Thrilled, or any opener like that.
-Start mid thought as if you are already doing it.
-No bullet points, no dashes, no asterisks, no em dashes, no special characters of any kind.
-Plain flowing sentences only like a real person writing.
-Max 3 sentences total then 3 hashtags on the last line.
-Keep it short and specific to this stage only, not vague or generic.
-Do not try to sound impressive or prove too much. One simple honest thought.
-If this is stage 13 or 14 make it sound like the project is wrapping up naturally.
-Mention internship search only once across all posts, not every time.
-End with a question or honest thought that invites a reply.
-Write only the post, nothing else."""}
+            {"role": "user", "content": prompt}
         ]
     )
 
